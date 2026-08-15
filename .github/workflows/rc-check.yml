@@ -1,0 +1,65 @@
+name: RC1 Regression Checks
+
+on:
+  push:
+    branches: ["release/v1.7-rc1-checks"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in app-*.js bootstrap.js install.js sw.js; do
+            node --check "$f"
+          done
+      - name: Manifest JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8')); console.log('manifest ok')"
+      - name: Module completeness
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const b=fs.readFileSync('bootstrap.js','utf8');
+          const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
+          const uniq=[...new Set(mods)];
+          const expected=Array.from({length:27},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==27) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 27`);
+          for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
+          const sw=fs.readFileSync('sw.js','utf8');
+          if(!/length:27/.test(sw)) throw new Error('service worker não cacheia 27 módulos');
+          const idx=fs.readFileSync('index.html','utf8');
+          if(!idx.includes('authBoot')) throw new Error('porta de autenticação inicial ausente');
+          console.log('module completeness ok');
+          NODE
+      - name: Critical feature markers
+        shell: bash
+        run: |
+          grep -q "repairQueueEncoding" app-25.js
+          grep -q "Reclassificar tipo" app-25.js
+          grep -q "Data não informada" app-24.js
+          grep -q "Referência externa manual" app-27.js
+          grep -q "ResearchGate" app-27.js
+          grep -q "orcid-public" app-20.js
+          grep -q "openalex-public" app-22.js
+      - name: Conflict markers
+        shell: bash
+        run: |
+          if grep -R -nE '^(<<<<<<<|=======|>>>>>>>)' --include='*.js' --include='*.html' --include='*.css' --include='*.json' .; then
+            echo 'Marcadores de conflito encontrados'; exit 1;
+          fi
+      - name: Secret exposure guard
+        shell: bash
+        run: |
+          if grep -R -nE 'sb_secret_|service_role|ORCID_PUBLIC_CLIENT_SECRET[[:space:]]*=|OPENALEX_API_KEY[[:space:]]*=' --include='*.js' --include='*.html' --include='*.css' .; then
+            echo 'Possível segredo exposto no cliente'; exit 1;
+          fi
+          echo 'secret exposure guard ok'

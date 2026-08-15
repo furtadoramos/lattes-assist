@@ -14,6 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
+# A raiz publica a versão estável; /beta/ é montada da branch feature/auth-sync sem merge.
 jobs:
   deploy:
     environment:

@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz publica a versão estável; /beta/ é montada da branch feature/external-prospecting sem merge.
+# A raiz publica a versão estável; /beta/ é montada da branch feature/external-prospecting sem merge. Revisão multi-fonte v3.
 jobs:
   deploy:
     environment:

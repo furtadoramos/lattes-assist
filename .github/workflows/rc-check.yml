@@ -2,7 +2,7 @@ name: RC1 Regression Checks
 
 on:
   push:
-    branches: ["release/v1.7-rc1-checks"]
+    branches: ["release/v1.7-rc1", "release/v1.7-rc1-checks"]
   workflow_dispatch:
 
 permissions:

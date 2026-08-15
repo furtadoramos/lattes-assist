@@ -14,6 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
+# A raiz publica a v1.6 estável. /beta/ e /rc/ publicam a mesma v1.7 RC1 congelada, sem merge na main.
 jobs:
   deploy:
     environment:
@@ -21,8 +22,19 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout stable main
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Montar v1.7 RC1 sem mesclar na main
+        shell: bash
+        run: |
+          git fetch origin release/v1.7-rc1 --depth=1
+          mkdir -p beta rc
+          git archive --format=tar FETCH_HEAD | tar -x -C beta
+          cp -a beta/. rc/
+          rm -rf beta/.github rc/.github
 
       - name: Configure and enable Pages
         uses: actions/configure-pages@v5

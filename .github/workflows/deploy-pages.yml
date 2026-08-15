@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz publica a versão estável; /beta/ é montada da branch feature/external-prospecting sem merge. Revisão multi-fonte v4 com apresentação cronológica.
+# A raiz publica a versão estável; /beta/ é montada da branch feature/reclassify-queue-encoding sem merge.
 jobs:
   deploy:
     environment:
@@ -30,7 +30,7 @@ jobs:
       - name: Montar beta sem mesclar na main
         shell: bash
         run: |
-          git fetch origin feature/external-prospecting --depth=1
+          git fetch origin feature/reclassify-queue-encoding --depth=1
           mkdir -p beta
           git archive --format=tar FETCH_HEAD | tar -x -C beta
           rm -rf beta/.github

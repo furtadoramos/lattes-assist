@@ -1,0 +1,9 @@
+
+    <div class="footer">Lattes Assist v1.6 — prova de conceito. XML, documentos e OCR permanecem no navegador; bibliotecas de OCR/PDF podem ser carregadas da internet e consultas bibliográficas externas só ocorrem quando você as solicita. O parser integral calibrado, as relações internas, a reconciliação, a auditoria retrospectiva, a cartografia temporal, a deduplicação documental, o perfil de identidade, a central de decisão, o pacote assistido, os XMLs de auditoria, a inspeção XSD, a reconstrução XML, o diff visual, o diff semântico e as identidades persistentes continuam locais; o protótipo não envia dados ao CNPq e não solicita credenciais da Plataforma Lattes.</div>
+  </main>
+</div>
+
+<dialog id="detailDialog" class="dialog"><div class="inner"><h3 id="dialogTitle"></h3><div id="dialogBody"></div><div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn" onclick="document.getElementById('detailDialog').close()">Fechar</button></div></div></dialog>
+<dialog id="docEditDialog" class="dialog"><div class="inner"><h3>Revisar documento</h3><p class="hint">Corrija o texto de OCR e, se necessário, substitua a classificação sugerida. A fonte original permanece inalterada.</p><label class="hint">Classificação</label><select id="docClassSelect"></select><label class="hint" style="display:block;margin-top:12px">Texto extraído/OCR</label><textarea id="docTextEdit"></textarea><div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn" onclick="document.getElementById('docEditDialog').close()">Cancelar</button><button class="btn primary" id="saveDocEdit">Salvar revisão</button></div></div></dialog>
+
+<div id="installBanner" class="install-banner"><span>Instalar o Lattes Assist neste dispositivo</span><button id="installAppBtn">Instalar</button><button id="dismissInstall" class="dismiss">Agora não</button></div>

@@ -1,0 +1,78 @@
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><h1>Lattes Assist</h1><p>curadoria curricular inteligente · v1.6</p></div>
+    <nav class="nav">
+      <button class="active" data-panel="dashboard">Meu currículo</button>
+      <button data-panel="updates">Atualizações</button>
+      <button data-panel="documents">Documentos</button>
+      <button data-panel="audit">Auditoria</button><button data-panel="retro">Retrospectiva</button><button data-panel="timeline">Linha do tempo</button><button data-panel="external">Fontes externas</button><button data-panel="identity">Identidade</button><button data-panel="decision">Decisões</button><button data-panel="workflow">Atualização assistida</button><button data-panel="schema">XSD / XML</button><button data-panel="diff">Diff XML</button>
+      <button data-panel="sources">Fontes</button>
+      <button data-panel="sync">Sincronização</button>
+    </nav>
+    <div class="side-note">Protótipo local. O XML é processado no seu próprio navegador. Nenhuma senha do Lattes é solicitada ou armazenada.</div>
+  </aside>
+
+  <main class="main">
+    <section id="dashboard" class="panel active">
+      <header class="topbar">
+        <div><div class="eyebrow">Currículo consolidado</div><h2 id="researcherName">Nenhum currículo importado</h2><p class="sub" id="cvMeta">Importe o XML exportado do Lattes para iniciar a auditoria.</p></div>
+        <div class="actions"><label class="btn primary filebtn">Importar XML Lattes<input id="xmlInput" type="file" accept=".xml,text/xml,application/xml"></label><button class="btn" id="demoBtn">Carregar demonstração</button></div>
+      </header>
+      <div class="notice">Versão 1.6: identidade persistente de registros. O diff semântico passa a usar chaves estáveis derivadas de atributos substantivos, reduzindo falsos positivos quando a ordem dos nós muda após inserções ou reconstruções.</div>
+      <div class="grid">
+        <div class="card metric"><div class="n" id="mRecords">0</div><div class="label">registros curriculares</div></div>
+        <div class="card metric"><div class="n" id="mArticles">0</div><div class="label">artigos encontrados</div></div>
+        <div class="card metric"><div class="n" id="mDocs">0</div><div class="label">documentos processados</div></div>
+        <div class="card metric"><div class="n" id="mDoi">0</div><div class="label">artigos sem DOI</div></div>
+        <div class="card metric"><div class="n" id="mDup">0</div><div class="label">possíveis duplicidades</div></div>
+        <div class="card metric"><div class="n" id="mQueue">0</div><div class="label">operações na fila</div></div>
+        <div class="card metric"><div class="n" id="mCoverage">—</div><div class="label">cobertura estrutural estimada</div></div>
+        <div class="card metric"><div class="n" id="mRelations">0</div><div class="label">relações internas mapeadas</div></div>
+      </div>
+      <div class="section card">
+        <div class="section-head"><h3>Cobertura do parser</h3><span class="small" id="coverageMeta"></span></div>
+        <div id="coverageSummary" class="grid"></div>
+        <div id="coverageDetails" class="small" style="margin-top:12px;line-height:1.6"></div>
+      </div>
+      <div class="section">
+        <div class="section-head"><h3>Produção bibliográfica — artigos</h3><span class="small" id="articleCount"></span></div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Ano</th><th>Título</th><th>Periódico</th><th>DOI</th><th>Estado</th></tr></thead><tbody id="articleBody"><tr><td colspan="5" class="empty">Nenhum dado carregado.</td></tr></tbody></table></div>
+      </div>
+      <div class="section">
+        <div class="section-head"><h3>Mapa curricular integral</h3><div class="row"><select id="recordFilter" class="btn" aria-label="Filtrar categoria"><option value="">Todas as categorias</option></select><span class="small" id="recordCount"></span></div></div>
+        <div id="categorySummary" class="grid" style="margin-bottom:12px"></div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Ano</th><th>Categoria</th><th>Tipo</th><th>Título / atividade</th><th>Instituição / pessoa</th></tr></thead><tbody id="recordBody"><tr><td colspan="5" class="empty">Nenhum dado carregado.</td></tr></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="updates" class="panel">
+      <header class="topbar"><div><div class="eyebrow">Descoberta de metadados</div><h2>Atualizações</h2><p class="sub">Sugestões externas nunca são incorporadas sem sua aprovação.</p></div><div class="actions"><button class="btn primary" id="crossrefAll" disabled>Procurar DOI no Crossref</button></div></header>
+      <div class="card"><div id="updateList" class="empty">Importe um currículo para procurar metadados ausentes.</div></div>
+    </section>
+
+    <section id="documents" class="panel">
+      <header class="topbar">
+        <div><div class="eyebrow">Fontes não nativas digitais</div><h2>Documentos e Evidências</h2><p class="sub">Certificados, declarações, portarias, programas e imagens podem alimentar a mesma base de evidências do currículo.</p></div>
+        <div class="actions"><label class="btn primary filebtn">Adicionar arquivos<input id="docInput" type="file" multiple accept="application/pdf,image/png,image/jpeg,image/webp,text/plain,text/xml,application/xml,.pdf,.png,.jpg,.jpeg,.webp,.txt,.xml"></label><button class="btn" id="docDemoBtn">Demonstração documental</button><button class="btn" id="exportEvidence" disabled>Exportar índice</button></div>
+      </header>
+      <div class="notice">PDFs com texto são lidos diretamente. Imagens e páginas digitalizadas recorrem a OCR em português, executado no navegador. O arquivo original é preservado separadamente; o texto reconhecido continua revisável e nunca substitui a evidência original.</div>
+      <div class="grid">
+        <div class="card metric"><div class="n" id="dTotal">0</div><div class="label">documentos</div></div>
+        <div class="card metric"><div class="n" id="dOcr">0</div><div class="label">com OCR</div></div>
+        <div class="card metric"><div class="n" id="dReview">0</div><div class="label">pedem revisão</div></div>
+        <div class="card metric"><div class="n" id="dQueued">0</div><div class="label">enviados à fila</div></div>
+        <div class="card metric"><div class="n" id="dMatched">0</div><div class="label">evidências reconciliadas</div></div>
+        <div class="card metric"><div class="n" id="dMissing">0</div><div class="label">candidatas a ausência</div></div>
+        <div class="card metric"><div class="n" id="dUncertain">0</div><div class="label">correspondência incerta</div></div><div class="card metric"><div class="n" id="dBatch">0</div><div class="label">último lote processado</div></div><div class="card metric"><div class="n" id="dDupFiles">0</div><div class="label">arquivos duplicados evitados</div></div>
+      </div>
+      <div class="section">
+        <div id="dropzone" class="dropzone"><strong>Solte documentos aqui</strong><span class="small">ou use “Adicionar arquivos”. PDF, PNG, JPEG, WebP, TXT e XML.</span></div>
+      </div>
+      <div id="docProgress" class="section card processing">
+        <div class="progress-label"><strong id="docProgressLabel">Processando…</strong><span class="small" id="docProgressPct">0%</span></div>
+        <div class="progress"><span id="docProgressBar"></span></div>
+        <div class="hint" id="docProgressDetail" style="margin-top:8px"></div>
+      </div>
+      <div class="section card"><div class="section-head"><h3>Arquivo de evidências</h3><span class="small" id="docCount"></span></div><div id="documentList" class="empty">Nenhum documento processado.</div></div>
+    </section>

@@ -21,8 +21,18 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout stable main
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Montar beta sem mesclar na main
+        shell: bash
+        run: |
+          git fetch origin feature/auth-sync --depth=1
+          mkdir -p beta
+          git archive --format=tar FETCH_HEAD | tar -x -C beta
+          rm -rf beta/.github
 
       - name: Configure and enable Pages
         uses: actions/configure-pages@v5

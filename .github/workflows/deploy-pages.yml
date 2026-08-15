@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz publica a versão estável; /beta/ é montada da branch feature/manual-researchgate-reference sem merge.
+# A raiz publica a v1.6 estável. /beta/ e /rc/ publicam a mesma v1.7 RC1 congelada, sem merge na main.
 jobs:
   deploy:
     environment:
@@ -27,13 +27,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Montar beta sem mesclar na main
+      - name: Montar v1.7 RC1 sem mesclar na main
         shell: bash
         run: |
-          git fetch origin feature/manual-researchgate-reference --depth=1
-          mkdir -p beta
+          git fetch origin release/v1.7-rc1 --depth=1
+          mkdir -p beta rc
           git archive --format=tar FETCH_HEAD | tar -x -C beta
-          rm -rf beta/.github
+          cp -a beta/. rc/
+          rm -rf beta/.github rc/.github
 
       - name: Configure and enable Pages
         uses: actions/configure-pages@v5

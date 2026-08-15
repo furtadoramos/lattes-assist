@@ -30,58 +30,80 @@ Release candidate congelada em 15/08/2026 para regressão antes de qualquer prom
 - ResearchGate é aceito apenas como procedência informada pelo usuário; nenhuma automação/scraping da página é executada;
 - alterações curriculares continuam assistidas e dependem de conferência humana.
 
+## Verificações automatizadas concluídas
+
+- sintaxe de todos os módulos JavaScript;
+- validade do manifesto PWA;
+- presença e carregamento dos 27 módulos da aplicação;
+- cache dos 27 módulos pelo service worker;
+- presença dos recursos críticos de autenticação, encoding, reclassificação, cronologia, ORCID/OpenAlex e referência externa manual;
+- ausência de marcadores de conflito Git;
+- guarda estática contra exposição de service-role/secret keys no frontend.
+
+## Verificações funcionais confirmadas em logs
+
+- login por e-mail/senha concluído com sucesso;
+- logout concluído com sucesso;
+- Edge Function ORCID respondeu HTTP 200 em chamada real;
+- Edge Function OpenAlex respondeu HTTP 200 em chamada real.
+
+## Bloqueador antes de produção
+
+O Security Advisor do Supabase aponta `Leaked Password Protection Disabled`. A proteção contra senhas vazadas deve ser habilitada em Authentication > Providers > Email / configurações de senha antes da promoção para produção, quando disponível no plano do projeto. O Supabase informa que esse recurso consulta a base Pwned Passwords do Have I Been Pwned e está disponível em planos Pro ou superiores.
+
+Enquanto esse aviso permanecer ativo, a RC1 pode ser testada, mas não deve substituir a v1.6 pública.
+
 ## Checklist de regressão RC1
 
 ### Acesso e sessão
-- [ ] Criar conta / confirmar e-mail / entrar.
-- [ ] Sair e confirmar retorno à tela de autenticação.
-- [ ] Confirmar bloqueio de XML antes do login.
-- [ ] Confirmar proteção contra troca de usuário no mesmo espaço local.
+- [x] Criar conta / confirmar e-mail / entrar — fluxo já exercitado na beta.
+- [x] Sair e confirmar retorno à tela de autenticação — fluxo já exercitado na beta.
+- [x] Confirmar bloqueio de XML antes do login — validado funcionalmente na beta.
+- [ ] Confirmar proteção contra troca de usuário no mesmo espaço local com segunda conta distinta.
 
 ### XML e encoding
-- [ ] Importar XML real do Lattes.
-- [ ] Verificar acentos, cedilha, aspas e travessões.
-- [ ] Confirmar ausência de `�`, `Ã`, `Â` e padrões equivalentes nas telas.
-- [ ] Conferir especificamente títulos que já apresentaram corrupção de encoding.
+- [x] Importar XML real do Lattes.
+- [x] Verificar acentos, cedilha, aspas e travessões.
+- [x] Conferir especificamente títulos que já apresentaram corrupção de encoding.
+- [ ] Fazer uma última varredura visual completa buscando `�`, `Ã`, `Â` e padrões equivalentes em todas as telas após recarregar a RC.
 
 ### Documentos
-- [ ] Inserir PDF com texto.
-- [ ] Inserir imagem/PDF digitalizado e executar OCR.
-- [ ] Revisar classificação documental.
-- [ ] Verificar tipo visível e ordenação por data.
-- [ ] Enviar evidência pertinente à fila.
+- [x] Inserir e processar documentos/evidências na beta.
+- [x] Revisar classificação documental.
+- [x] Verificar tipo visível e ordenação por data.
+- [x] Enviar evidência pertinente à fila.
+- [ ] Repetir um teste OCR em documento digitalizado diretamente na RC congelada.
 
 ### DOI e fontes externas
-- [ ] Buscar DOI no Crossref.
-- [ ] Reclassificar uma sugestão DOI e aprová-la.
-- [ ] Prospectar Crossref + DataCite + OpenAlex + ORCID.
-- [ ] Confirmar deduplicação entre fontes.
-- [ ] Confirmar classificação automática e opção Reclassificar.
-- [ ] Adicionar candidato externo à fila.
-- [ ] Resolver uma referência manual com link + DOI/título.
+- [x] Buscar DOI no Crossref.
+- [x] Prospectar Crossref + DataCite + OpenAlex + ORCID.
+- [x] Confirmar funcionamento real de ORCID e OpenAlex no backend.
+- [x] Confirmar classificação automática e opção Reclassificar.
+- [x] Adicionar candidato externo à fila.
+- [x] Resolver referência manual com link + DOI/título.
+- [ ] Repetir uma reclassificação de DOI e uma reclassificação de fonte externa diretamente na RC congelada.
 
 ### Fila e Atualização Assistida
-- [ ] Conferir agrupamento por ano, filtros, tipo e status.
-- [ ] Reclassificar item elegível da fila.
-- [ ] Remover item individual.
-- [ ] Gerar pacote de Atualização Assistida.
-- [ ] Confirmar que nenhum título apresenta mojibake.
-- [ ] Exportar pacote assistido.
+- [x] Conferir agrupamento por ano, filtros, tipo e status.
+- [x] Reclassificar item elegível da fila.
+- [x] Remover item individual.
+- [x] Gerar pacote de Atualização Assistida.
+- [x] Corrigir o caso persistente de mojibake na Atualização Assistida.
+- [ ] Exportar novamente o pacote assistido a partir da RC congelada e verificar o arquivo produzido.
 
 ### Backup e sincronização
-- [ ] Exportar backup sem criptografia.
-- [ ] Exportar backup criptografado.
-- [ ] Restaurar backup controlado.
-- [ ] Salvar análise na nuvem.
-- [ ] Recuperar a análise em sessão/dispositivo distinto.
-- [ ] Confirmar preservação local dos arquivos originais.
+- [ ] Exportar backup sem criptografia na RC.
+- [ ] Exportar backup criptografado na RC.
+- [ ] Restaurar backup controlado na RC.
+- [ ] Salvar análise na nuvem e recuperar em sessão/dispositivo distinto.
+- [ ] Confirmar preservação local dos arquivos originais após a recuperação remota.
 
 ### XML/XSD/diffs
-- [ ] Gerar XML de auditoria e patch.
+- [ ] Gerar XML de auditoria e patch na RC.
 - [ ] Carregar XSD, quando disponível.
 - [ ] Reconstruir XML em cenário controlado.
 - [ ] Conferir diff visual e semântico.
 
 ## Critério de promoção
 
-A RC1 somente deve substituir a v1.6 pública após o checklist acima não revelar regressões bloqueadoras. Qualquer correção em código de produto após este congelamento deve resultar em uma nova release candidate (RC2 ou posterior), em vez de alterar silenciosamente a RC1.
+A RC1 somente deve substituir a v1.6 pública após: (1) o bloqueador de senhas vazadas ser resolvido ou conscientemente tratado conforme o plano do Supabase; e (2) os itens restantes do checklist não revelarem regressões bloqueadoras. Qualquer correção em código de produto após este congelamento deve resultar em uma nova release candidate (RC2 ou posterior), em vez de alterar silenciosamente a RC1.

@@ -1,8 +1,8 @@
-name: RC2 Regression Checks
+name: RC3 Regression Checks
 
 on:
   push:
-    branches: ["release/v1.7-rc2"]
+    branches: ["release/v1.7-rc3"]
   workflow_dispatch:
 
 permissions:
@@ -31,17 +31,17 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:28},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==28) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 28`);
+          const expected=Array.from({length:29},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==29) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 29`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-28.js')<b.indexOf('app-27.js')) throw new Error('app-28.js precisa carregar depois de app-27.js');
+          if(b.indexOf('app-29.js')<b.indexOf('app-28.js')) throw new Error('app-29.js precisa carregar depois de app-28.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:28/.test(sw)) throw new Error('service worker não cacheia 28 módulos');
+          if(!/length:29/.test(sw)) throw new Error('service worker não cacheia 29 módulos');
           const idx=fs.readFileSync('index.html','utf8');
           if(!idx.includes('authBoot')) throw new Error('porta de autenticação inicial ausente');
           console.log('module completeness ok');
           NODE
-      - name: Critical feature markers
+      - name: Existing critical feature markers
         shell: bash
         run: |
           grep -q "repairQueueEncoding" app-25.js
@@ -51,7 +51,7 @@ jobs:
           grep -q "ResearchGate" app-27.js
           grep -q "orcid-public" app-20.js
           grep -q "openalex-public" app-22.js
-      - name: Atomic backup restore guard
+      - name: Atomic local restore guard
         shell: bash
         run: |
           grep -q "atomicReplaceEvidenceDbRc2" app-28.js
@@ -59,7 +59,34 @@ jobs:
           grep -q "transaction(\[STORE,FILE_STORE\],'readwrite')" app-28.js
           grep -q "tx.onabort" app-28.js
           grep -q "estado anterior foi recuperado" app-28.js
-          grep -q "prepareEvidenceSnapshotRc2" app-28.js
+      - name: RC3 navigation and queue guard
+        shell: bash
+        run: |
+          grep -q "Fila de atualização" app-29.js
+          grep -q "Entrada e prospecção" app-29.js
+          grep -q "Preparação da atualização" app-29.js
+          grep -q "queueHeaderActions" app-29.js
+          grep -q "10. Fila" app-29.js
+          grep -q "11. Atualização assistida" app-29.js
+      - name: Encrypted backup only guard
+        shell: bash
+        run: |
+          grep -q "backupPassphraseConfirm" app-29.js
+          grep -q "backupRestorePassphrase" app-29.js
+          grep -q "Exportar backup criptografado" app-29.js
+          grep -q "aceita restauração somente de backup criptografado" app-29.js
+          grep -q "RC3_BACKUP_MIN_PASSWORD=12" app-29.js
+      - name: End-to-end encrypted cloud guard
+        shell: bash
+        run: |
+          grep -q "RC3_CLOUD_BUCKET='lattes-assist-vaults'" app-29.js
+          grep -q "RC3_CHUNK_SIZE=8\*1024\*1024" app-29.js
+          grep -q "rc3EncryptAndUploadChunks" app-29.js
+          grep -q "rc3DecryptBytes" app-29.js
+          grep -q "user_cloud_vaults" app-29.js
+          grep -q "Cofre criptografado salvo" app-29.js
+          grep -q "Arquivos originais" app-29.js || grep -q "arquivos originais" app-29.js
+          grep -q "user_snapshots').delete" app-29.js
       - name: Conflict markers
         shell: bash
         run: |

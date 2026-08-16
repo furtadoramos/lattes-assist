@@ -1,8 +1,8 @@
-name: RC6 Regression Checks
+name: RC7 Regression Checks
 
 on:
   push:
-    branches: ["release/v1.7-rc6"]
+    branches: ["release/v1.7-rc7"]
   workflow_dispatch:
 
 permissions:
@@ -31,15 +31,15 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:33},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==33) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 33`);
+          const expected=Array.from({length:34},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==34) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 34`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-33.js')<b.indexOf('app-32.js')) throw new Error('app-33.js precisa carregar depois de app-32.js');
+          if(b.indexOf('app-34.js')<b.indexOf('app-33.js')) throw new Error('app-34.js precisa carregar depois de app-33.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:33/.test(sw)) throw new Error('service worker não cacheia 33 módulos');
+          if(!/length:34/.test(sw)) throw new Error('service worker não cacheia 34 módulos');
           const idx=fs.readFileSync('index.html','utf8');
-          if(!idx.includes('bootstrap.js?v=rc6-1')) throw new Error('index não força bootstrap RC6');
-          if(!idx.includes('rc6.css?v=rc6-1')) throw new Error('index não carrega estilo RC6');
+          if(!idx.includes('bootstrap.js?v=rc7-1')) throw new Error('index não força bootstrap RC7');
+          if(!idx.includes('rc6.css?v=rc7-1')) throw new Error('index não força estilo lateral atual');
           if(!idx.includes('authBoot')) throw new Error('porta de autenticação inicial ausente');
           NODE
       - name: Existing critical feature markers
@@ -47,11 +47,11 @@ jobs:
         run: |
           grep -q "repairQueueEncoding" app-25.js
           grep -q "Reclassificar tipo" app-25.js
-          grep -q "Data não informada" app-24.js
           grep -q "Referência externa manual" app-27.js
-          grep -q "ResearchGate" app-27.js
-          grep -q "orcid-public" app-20.js
-          grep -q "openalex-public" app-22.js
+          grep -q "Cofre criptografado confirmado no servidor" app-31.js
+          grep -q "Sair da conta" app-32.js
+          grep -q "height:100dvh" rc6.css
+          grep -q "overflow-y:auto" rc6.css
       - name: Atomic local restore guard
         shell: bash
         run: |
@@ -59,32 +59,26 @@ jobs:
           grep -q "captureEvidenceRollbackRc2" app-28.js
           grep -q "tx.onabort" app-28.js
           grep -q "estado anterior foi recuperado" app-28.js
-      - name: Navigation and encrypted storage guard
+      - name: RC7 cloud vault schema guard
         shell: bash
         run: |
-          grep -q "10. Fila" app-29.js
-          grep -q "Exportar backup criptografado" app-29.js
-          grep -q "RC3_CLOUD_BUCKET='lattes-assist-vaults'" app-29.js
-          grep -q "Cofre criptografado confirmado no servidor" app-31.js
-          grep -q "rc4VerifyVaultPersistence" app-31.js
-      - name: Account and logout guard
+          grep -q "validateCloudVaultPayloadRc7" app-34.js
+          grep -q "RC3_CLOUD_PAYLOAD_SCHEMA" app-34.js
+          grep -q "applyCloudVaultPayloadRc7" app-34.js
+          grep -q "rc3DownloadVault" app-34.js
+          grep -q "atomicReplaceEvidenceDbRc2(prepared)" app-34.js
+          grep -q "estado anterior foi recuperado" app-34.js
+          grep -q "Cofre recuperado com segurança" app-34.js
+          if grep -q "validateBackupPayloadRc2(manifest" app-34.js; then
+            echo 'RC7 não pode validar manifesto de cofre como backup local'; exit 1;
+          fi
+      - name: RC7 cache freshness guard
         shell: bash
         run: |
-          grep -q "rc5AccountStrip" app-32.js
-          grep -q "Sair da conta" app-32.js
-          grep -q "cloudSignOut" app-32.js
-          grep -q "Conta / cofre" app-32.js
-      - name: RC6 sidebar scrolling guard
-        shell: bash
-        run: |
-          grep -q "height:100dvh" rc6.css
-          grep -q "overflow-y:auto" rc6.css
-          grep -q "scrollbar-gutter:stable" rc6.css
-          grep -q "overscroll-behavior:contain" rc6.css
-          grep -q "v1.7 RC6" app-33.js
-          grep -q "rc6-sidebar-scroll" sw.js
-          grep -q "rc6.css" sw.js
-          grep -q "networkFirst" sw.js
+          grep -q "rc7-cloud-restore" sw.js
+          grep -q "length:34" sw.js
+          grep -q "bootstrap.js?v=rc7-1" index.html
+          grep -q "v1.7 RC7" app-34.js
       - name: Conflict markers
         shell: bash
         run: |

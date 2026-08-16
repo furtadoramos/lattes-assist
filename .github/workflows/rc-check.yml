@@ -1,8 +1,8 @@
-name: RC5 Regression Checks
+name: RC6 Regression Checks
 
 on:
   push:
-    branches: ["release/v1.7-rc5"]
+    branches: ["release/v1.7-rc6"]
   workflow_dispatch:
 
 permissions:
@@ -31,14 +31,15 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:32},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==32) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 32`);
+          const expected=Array.from({length:33},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==33) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 33`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-32.js')<b.indexOf('app-31.js')) throw new Error('app-32.js precisa carregar depois de app-31.js');
+          if(b.indexOf('app-33.js')<b.indexOf('app-32.js')) throw new Error('app-33.js precisa carregar depois de app-32.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:32/.test(sw)) throw new Error('service worker não cacheia 32 módulos');
+          if(!/length:33/.test(sw)) throw new Error('service worker não cacheia 33 módulos');
           const idx=fs.readFileSync('index.html','utf8');
-          if(!idx.includes('bootstrap.js?v=rc5-1')) throw new Error('index não força bootstrap RC5');
+          if(!idx.includes('bootstrap.js?v=rc6-1')) throw new Error('index não força bootstrap RC6');
+          if(!idx.includes('rc6.css?v=rc6-1')) throw new Error('index não carrega estilo RC6');
           if(!idx.includes('authBoot')) throw new Error('porta de autenticação inicial ausente');
           NODE
       - name: Existing critical feature markers
@@ -66,22 +67,24 @@ jobs:
           grep -q "RC3_CLOUD_BUCKET='lattes-assist-vaults'" app-29.js
           grep -q "Cofre criptografado confirmado no servidor" app-31.js
           grep -q "rc4VerifyVaultPersistence" app-31.js
-      - name: RC5 account and logout visibility guard
+      - name: Account and logout guard
         shell: bash
         run: |
           grep -q "rc5AccountStrip" app-32.js
           grep -q "Sair da conta" app-32.js
           grep -q "cloudSignOut" app-32.js
           grep -q "Conta / cofre" app-32.js
-          grep -q "position:sticky" app-32.js
-          grep -q "v1.7 RC5" app-32.js
-      - name: RC5 cache freshness guard
+      - name: RC6 sidebar scrolling guard
         shell: bash
         run: |
-          grep -q "rc5-session-dock" sw.js
+          grep -q "height:100dvh" rc6.css
+          grep -q "overflow-y:auto" rc6.css
+          grep -q "scrollbar-gutter:stable" rc6.css
+          grep -q "overscroll-behavior:contain" rc6.css
+          grep -q "v1.7 RC6" app-33.js
+          grep -q "rc6-sidebar-scroll" sw.js
+          grep -q "rc6.css" sw.js
           grep -q "networkFirst" sw.js
-          grep -q "e.request.mode==='navigate'" sw.js
-          grep -q "bootstrap.js?v=rc5-1" index.html
       - name: Conflict markers
         shell: bash
         run: |

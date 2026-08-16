@@ -1,4 +1,4 @@
-name: RC7 Regression Checks
+name: v1.7 Release Checks
 
 on:
   push:
@@ -31,18 +31,19 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:34},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==34) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 34`);
+          const expected=Array.from({length:35},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==35) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 35`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-34.js')<b.indexOf('app-33.js')) throw new Error('app-34.js precisa carregar depois de app-33.js');
+          if(b.indexOf('app-35.js')<b.indexOf('app-34.js')) throw new Error('app-35.js precisa carregar depois de app-34.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:34/.test(sw)) throw new Error('service worker não cacheia 34 módulos');
+          if(!/length:35/.test(sw)) throw new Error('service worker não cacheia 35 módulos');
           const idx=fs.readFileSync('index.html','utf8');
-          if(!idx.includes('bootstrap.js?v=rc7-1')) throw new Error('index não força bootstrap RC7');
-          if(!idx.includes('rc6.css?v=rc7-1')) throw new Error('index não força estilo lateral atual');
-          if(!idx.includes('authBoot')) throw new Error('porta de autenticação inicial ausente');
+          if(!idx.includes('bootstrap.js?v=1.7-1')) throw new Error('index não força bootstrap estável v1.7');
+          if(!idx.includes('rc6.css?v=1.7-1')) throw new Error('index não força estilo atual da v1.7');
+          if(!idx.includes('<title>Lattes Assist v1.7</title>')) throw new Error('título estável v1.7 ausente');
+          if(idx.includes('RC7')) throw new Error('index ainda exibe identidade RC7');
           NODE
-      - name: Existing critical feature markers
+      - name: Critical feature markers
         shell: bash
         run: |
           grep -q "repairQueueEncoding" app-25.js
@@ -59,7 +60,7 @@ jobs:
           grep -q "captureEvidenceRollbackRc2" app-28.js
           grep -q "tx.onabort" app-28.js
           grep -q "estado anterior foi recuperado" app-28.js
-      - name: RC7 cloud vault schema guard
+      - name: Cloud vault restore guard
         shell: bash
         run: |
           grep -q "validateCloudVaultPayloadRc7" app-34.js
@@ -67,18 +68,19 @@ jobs:
           grep -q "applyCloudVaultPayloadRc7" app-34.js
           grep -q "rc3DownloadVault" app-34.js
           grep -q "atomicReplaceEvidenceDbRc2(prepared)" app-34.js
-          grep -q "estado anterior foi recuperado" app-34.js
           grep -q "Cofre recuperado com segurança" app-34.js
           if grep -q "validateBackupPayloadRc2(manifest" app-34.js; then
-            echo 'RC7 não pode validar manifesto de cofre como backup local'; exit 1;
+            echo 'Manifesto do cofre não pode ser validado como backup local'; exit 1;
           fi
-      - name: RC7 cache freshness guard
+      - name: Stable v1.7 identity and cache guard
         shell: bash
         run: |
-          grep -q "rc7-cloud-restore" sw.js
-          grep -q "length:34" sw.js
-          grep -q "bootstrap.js?v=rc7-1" index.html
-          grep -q "v1.7 RC7" app-34.js
+          grep -q "STABLE_VERSION='1.7'" app-35.js
+          grep -q "curadoria curricular inteligente · v1.7" app-35.js
+          grep -q "Lattes Assist v1.7" app-35.js
+          grep -q "v1.7-stable-1" sw.js
+          grep -q "length:35" sw.js
+          grep -q "bootstrap.js?v=1.7-1" index.html
       - name: Conflict markers
         shell: bash
         run: |

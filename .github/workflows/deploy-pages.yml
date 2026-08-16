@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz publica a v1.6 estável. /beta/ e /rc/ publicam a mesma v1.7 RC7 congelada, sem merge na main.
+# A raiz publica a v1.7 estável. /beta/ e /rc/ espelham a branch congelada release/v1.7-rc7.
 jobs:
   deploy:
     environment:
@@ -27,7 +27,7 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Montar v1.7 RC7 sem mesclar na main
+      - name: Montar espelhos beta e rc da v1.7
         shell: bash
         run: |
           git fetch origin release/v1.7-rc7 --depth=1

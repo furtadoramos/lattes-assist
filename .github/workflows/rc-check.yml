@@ -31,12 +31,12 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:29},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==29) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 29`);
+          const expected=Array.from({length:30},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==30) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 30`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-29.js')<b.indexOf('app-28.js')) throw new Error('app-29.js precisa carregar depois de app-28.js');
+          if(b.indexOf('app-30.js')<b.indexOf('app-29.js')) throw new Error('app-30.js precisa carregar depois de app-29.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:29/.test(sw)) throw new Error('service worker não cacheia 29 módulos');
+          if(!/length:30/.test(sw)) throw new Error('service worker não cacheia 30 módulos');
           const idx=fs.readFileSync('index.html','utf8');
           if(!idx.includes('authBoot')) throw new Error('porta de autenticação inicial ausente');
           console.log('module completeness ok');
@@ -85,8 +85,10 @@ jobs:
           grep -q "rc3DecryptBytes" app-29.js
           grep -q "user_cloud_vaults" app-29.js
           grep -q "Cofre criptografado salvo" app-29.js
-          grep -q "Arquivos originais" app-29.js || grep -q "arquivos originais" app-29.js
-          grep -q "user_snapshots').delete" app-29.js
+          grep -q "user_snapshots').delete" app-30.js
+          grep -q "user_preferences').delete" app-30.js
+          grep -q "rc3DeleteVaultStrict" app-30.js
+          grep -q "não criptografado" app-30.js
       - name: Conflict markers
         shell: bash
         run: |

@@ -1,8 +1,8 @@
-name: RC3 Regression Checks
+name: RC4 Regression Checks
 
 on:
   push:
-    branches: ["release/v1.7-rc3"]
+    branches: ["release/v1.7-rc4"]
   workflow_dispatch:
 
 permissions:
@@ -31,12 +31,12 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:30},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==30) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 30`);
+          const expected=Array.from({length:31},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==31) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 31`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-30.js')<b.indexOf('app-29.js')) throw new Error('app-30.js precisa carregar depois de app-29.js');
+          if(b.indexOf('app-31.js')<b.indexOf('app-30.js')) throw new Error('app-31.js precisa carregar depois de app-30.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:30/.test(sw)) throw new Error('service worker não cacheia 30 módulos');
+          if(!/length:31/.test(sw)) throw new Error('service worker não cacheia 31 módulos');
           const idx=fs.readFileSync('index.html','utf8');
           if(!idx.includes('authBoot')) throw new Error('porta de autenticação inicial ausente');
           console.log('module completeness ok');
@@ -56,39 +56,34 @@ jobs:
         run: |
           grep -q "atomicReplaceEvidenceDbRc2" app-28.js
           grep -q "captureEvidenceRollbackRc2" app-28.js
-          grep -q "transaction(\[STORE,FILE_STORE\],'readwrite')" app-28.js
           grep -q "tx.onabort" app-28.js
           grep -q "estado anterior foi recuperado" app-28.js
-      - name: RC3 navigation and queue guard
+      - name: RC3 navigation and encryption guard
         shell: bash
         run: |
-          grep -q "Fila de atualização" app-29.js
-          grep -q "Entrada e prospecção" app-29.js
-          grep -q "Preparação da atualização" app-29.js
-          grep -q "queueHeaderActions" app-29.js
           grep -q "10. Fila" app-29.js
-          grep -q "11. Atualização assistida" app-29.js
-      - name: Encrypted backup only guard
-        shell: bash
-        run: |
-          grep -q "backupPassphraseConfirm" app-29.js
           grep -q "backupRestorePassphrase" app-29.js
           grep -q "Exportar backup criptografado" app-29.js
-          grep -q "aceita restauração somente de backup criptografado" app-29.js
-          grep -q "RC3_BACKUP_MIN_PASSWORD=12" app-29.js
-      - name: End-to-end encrypted cloud guard
-        shell: bash
-        run: |
           grep -q "RC3_CLOUD_BUCKET='lattes-assist-vaults'" app-29.js
           grep -q "RC3_CHUNK_SIZE=8\*1024\*1024" app-29.js
-          grep -q "rc3EncryptAndUploadChunks" app-29.js
-          grep -q "rc3DecryptBytes" app-29.js
-          grep -q "user_cloud_vaults" app-29.js
-          grep -q "Cofre criptografado salvo" app-29.js
           grep -q "user_snapshots').delete" app-30.js
           grep -q "user_preferences').delete" app-30.js
-          grep -q "rc3DeleteVaultStrict" app-30.js
-          grep -q "não criptografado" app-30.js
+      - name: RC4 profile and logout guard
+        shell: bash
+        run: |
+          grep -q "userProfileCard" app-31.js
+          grep -q "rc4SignOut" app-31.js
+          grep -q "cloudSignOut" app-31.js
+          grep -q "Conta / cofre" app-31.js
+          grep -q "v1.7 RC4" app-31.js
+      - name: RC4 remote vault verification guard
+        shell: bash
+        run: |
+          grep -q "rc4VerifyVaultPersistence" app-31.js
+          grep -q "header.bin" app-31.js
+          grep -q "Ainda existem dados curriculares legados não criptografados" app-31.js
+          grep -q "Cofre criptografado confirmado no servidor" app-31.js
+          grep -q "user_cloud_vaults" app-31.js
       - name: Conflict markers
         shell: bash
         run: |

@@ -1,0 +1,12 @@
+@media (min-width:981px){
+  .sidebar{height:100dvh;max-height:100dvh;overflow:hidden;gap:12px;padding-bottom:16px}
+  .sidebar>.brand{flex:0 0 auto}
+  #rc5AccountStrip{position:relative!important;top:auto!important;flex:0 0 auto;margin:0 0 4px!important}
+  .nav{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:8px;scrollbar-gutter:stable;overscroll-behavior:contain;align-content:start}
+  .nav::-webkit-scrollbar{width:10px}
+  .nav::-webkit-scrollbar-track{background:rgba(255,255,255,.05);border-radius:999px}
+  .nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.28);border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+  .nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.42);background-clip:padding-box}
+  .nav{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) rgba(255,255,255,.06)}
+  .side-note{flex:0 0 auto;margin-top:0;max-height:72px;overflow:auto}
+}

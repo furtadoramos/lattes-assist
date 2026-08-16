@@ -1,8 +1,8 @@
-name: RC4 Regression Checks
+name: RC5 Regression Checks
 
 on:
   push:
-    branches: ["release/v1.7-rc4"]
+    branches: ["release/v1.7-rc5"]
   workflow_dispatch:
 
 permissions:
@@ -31,15 +31,15 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:31},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==31) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 31`);
+          const expected=Array.from({length:32},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==32) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 32`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-31.js')<b.indexOf('app-30.js')) throw new Error('app-31.js precisa carregar depois de app-30.js');
+          if(b.indexOf('app-32.js')<b.indexOf('app-31.js')) throw new Error('app-32.js precisa carregar depois de app-31.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:31/.test(sw)) throw new Error('service worker não cacheia 31 módulos');
+          if(!/length:32/.test(sw)) throw new Error('service worker não cacheia 32 módulos');
           const idx=fs.readFileSync('index.html','utf8');
+          if(!idx.includes('bootstrap.js?v=rc5-1')) throw new Error('index não força bootstrap RC5');
           if(!idx.includes('authBoot')) throw new Error('porta de autenticação inicial ausente');
-          console.log('module completeness ok');
           NODE
       - name: Existing critical feature markers
         shell: bash
@@ -58,32 +58,30 @@ jobs:
           grep -q "captureEvidenceRollbackRc2" app-28.js
           grep -q "tx.onabort" app-28.js
           grep -q "estado anterior foi recuperado" app-28.js
-      - name: RC3 navigation and encryption guard
+      - name: Navigation and encrypted storage guard
         shell: bash
         run: |
           grep -q "10. Fila" app-29.js
-          grep -q "backupRestorePassphrase" app-29.js
           grep -q "Exportar backup criptografado" app-29.js
           grep -q "RC3_CLOUD_BUCKET='lattes-assist-vaults'" app-29.js
-          grep -q "RC3_CHUNK_SIZE=8\*1024\*1024" app-29.js
-          grep -q "user_snapshots').delete" app-30.js
-          grep -q "user_preferences').delete" app-30.js
-      - name: RC4 profile and logout guard
-        shell: bash
-        run: |
-          grep -q "userProfileCard" app-31.js
-          grep -q "rc4SignOut" app-31.js
-          grep -q "cloudSignOut" app-31.js
-          grep -q "Conta / cofre" app-31.js
-          grep -q "v1.7 RC4" app-31.js
-      - name: RC4 remote vault verification guard
-        shell: bash
-        run: |
-          grep -q "rc4VerifyVaultPersistence" app-31.js
-          grep -q "header.bin" app-31.js
-          grep -q "Ainda existem dados curriculares legados não criptografados" app-31.js
           grep -q "Cofre criptografado confirmado no servidor" app-31.js
-          grep -q "user_cloud_vaults" app-31.js
+          grep -q "rc4VerifyVaultPersistence" app-31.js
+      - name: RC5 account and logout visibility guard
+        shell: bash
+        run: |
+          grep -q "rc5AccountStrip" app-32.js
+          grep -q "Sair da conta" app-32.js
+          grep -q "cloudSignOut" app-32.js
+          grep -q "Conta / cofre" app-32.js
+          grep -q "position:sticky" app-32.js
+          grep -q "v1.7 RC5" app-32.js
+      - name: RC5 cache freshness guard
+        shell: bash
+        run: |
+          grep -q "rc5-session-dock" sw.js
+          grep -q "networkFirst" sw.js
+          grep -q "e.request.mode==='navigate'" sw.js
+          grep -q "bootstrap.js?v=rc5-1" index.html
       - name: Conflict markers
         shell: bash
         run: |

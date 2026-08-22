@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz publica a v1.7 estável. /beta/ e /rc/ espelham a branch congelada release/v1.7-rc7.
+# A raiz e /rc/ publicam a v1.7 estável. /beta/ publica a integração Publish or Perish em desenvolvimento.
 jobs:
   deploy:
     environment:
@@ -27,13 +27,13 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Montar espelhos beta e rc da v1.7
+      - name: Montar RC estável e beta Publish or Perish
         shell: bash
         run: |
-          git fetch origin release/v1.7-rc7 --depth=1
           mkdir -p beta rc
+          git archive --format=tar HEAD | tar -x -C rc
+          git fetch origin feature/publish-or-perish --depth=1
           git archive --format=tar FETCH_HEAD | tar -x -C beta
-          cp -a beta/. rc/
           rm -rf beta/.github rc/.github
 
       - name: Configure and enable Pages

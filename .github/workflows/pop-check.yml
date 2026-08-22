@@ -3,6 +3,8 @@ name: Publish or Perish Integration Checks
 on:
   push:
     branches: ["feature/publish-or-perish"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,110 @@
+name: Publish or Perish Integration Checks
+
+on:
+  push:
+    branches: ["feature/publish-or-perish"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in app-*.js bootstrap.js install.js sw.js; do
+            node --check "$f"
+          done
+
+      - name: Manifest JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8')); console.log('manifest ok')"
+
+      - name: Module completeness
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const b=fs.readFileSync('bootstrap.js','utf8');
+          const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
+          const uniq=[...new Set(mods)];
+          const expected=Array.from({length:36},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==36) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 36`);
+          for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
+          if(b.indexOf('app-36.js')<b.indexOf('app-35.js')) throw new Error('app-36.js precisa carregar após app-35.js');
+          const sw=fs.readFileSync('sw.js','utf8');
+          if(!/length:36/.test(sw)) throw new Error('service worker não cacheia 36 módulos');
+          if(!sw.includes('v1.8-beta-pop1')) throw new Error('cache beta PoP ausente');
+          const idx=fs.readFileSync('index.html','utf8');
+          if(!idx.includes('bootstrap.js?v=pop1')) throw new Error('index não força bootstrap PoP');
+          console.log('module completeness ok');
+          NODE
+
+      - name: Publish or Perish parser contract
+        shell: bash
+        run: |
+          node <<'NODE'
+          const assert=require('assert');
+          require('./app-36.js');
+          const p=globalThis.LattesPopInterop;
+          assert(p,'LattesPopInterop não exportado');
+
+          const json='\uFEFF[{"type":"Journal Article","title":"Artigo Árvore","authors":["Ana Silva","João Souza"],"source":"Revista Teste","year":2024,"volume":12,"issue":2,"startpage":10,"endpage":20,"publisher":"Editora","doi":"10.1234/teste","issn":"1234-5678","abstract":"Resumo","article_url":"https://example.org/a","citation_url":"https://example.org/c","cites_url":"https://example.org/cites","cites":17,"ecc":17,"rank":3,"use":true}]';
+          const j=p.parsePopJson(json);assert.equal(j.length,1);const jn=p.normalizePopRecord(j[0],'json');assert.equal(jn.title,'Artigo Árvore');assert.equal(jn.authors.length,2);assert.equal(jn.venue,'Revista Teste');assert.equal(jn.year,'2024');assert.equal(jn.cites,17);assert.equal(jn.doi,'10.1234/teste');
+
+          const jsonl='{"title":"Um","authors":["A"],"year":2020,"cites":2}\n{"title":"Dois","authors":["B"],"year":2021,"cites":4}\n';
+          assert.equal(p.parsePopJsonl(jsonl).length,2);assert.equal(p.detectPopFormat('x.jsonl',jsonl),'jsonl');
+
+          const csv='\uFEFFCites,Authors,Title,Year,Source,Publisher,ArticleURL,CitesURL,GSRank,QueryDate,Type,DOI,ISSN,CitationURL,Volume,Issue,StartPage,EndPage,ECC,CitesPerYear,CitesPerAuthor,AuthorCount,Age,Abstract\n17,"Ana Silva; João Souza","Artigo Árvore",2024,"Revista Teste","Editora","https://example.org/a","https://example.org/cites",3,"2026-08-22 12:00:00","Journal Article","10.1234/teste","1234-5678","https://example.org/c",12,2,10,20,17,8.5,9,2,2,"Resumo"\n';
+          const c=p.parsePopCsv(csv);assert.equal(c.length,1);const cn=p.normalizePopRecord(c[0],'csv');assert.equal(cn.authors.length,2);assert.equal(cn.cites,17);assert.equal(cn.citesPerYear,8.5);assert.equal(cn.abstract,'Resumo');
+
+          const ris='\uFEFFTY  - JOUR\nAU  - Silva, Ana\nAU  - Souza, João\nTI  - Artigo Árvore\nJF  - Revista Teste\nPB  - Editora\nDO  - 10.1234/teste\nSN  - 1234-5678\nPY  - 2024///\nVL  - 12\nIS  - 2\nSP  - 10\nEP  - 20\nAB  - Resumo\nM1  - Query date: 2026-08-22 12:00:00\nM1  - 17 cites: https://example.org/cites\nER  - \n';
+          const r=p.parsePopRis(ris);assert.equal(r.length,1);const rn=p.normalizePopRecord(r[0],'ris');assert.equal(rn.authors.length,2);assert.equal(rn.title,'Artigo Árvore');assert.equal(rn.year,'2024');assert.equal(rn.cites,17);assert.equal(p.detectPopFormat('x.ris',ris),'ris');
+
+          const out=p.recordsToPopRis([{title:'Artigo Árvore',year:'2024',doi:'10.1234/teste',venue:'Revista Teste',authors:['Ana Silva'],classification:{key:'ARTIGO',label:'Artigo em periódico'},popMetrics:{cites:17,citesUrl:'https://example.org/cites'}}]);
+          for(const marker of ['TY  - JOUR','AU  - Ana Silva','TI  - Artigo Árvore','DO  - 10.1234/teste','PY  - 2024///','17 cites: https://example.org/cites','ER  -']) assert(out.includes(marker),`RIS export sem ${marker}`);
+          console.log('Publish or Perish parser/export contract ok');
+          NODE
+
+      - name: Integration markers
+        shell: bash
+        run: |
+          grep -q "Importar resultados do PoP" app-36.js
+          grep -q "Exportar candidatos em RIS" app-36.js
+          grep -q "Exportar fila em RIS" app-36.js
+          grep -q "parsePopJsonl" app-36.js
+          grep -q "parsePopCsv" app-36.js
+          grep -q "parsePopRis" app-36.js
+          grep -q "popMetrics" app-36.js
+          grep -q "rebindExternalScanPreservingPop" app-36.js
+          grep -q "Publish or Perish" app-36.js
+
+      - name: Existing critical feature markers
+        shell: bash
+        run: |
+          grep -q "Cofre recuperado com segurança" app-34.js
+          grep -q "Cofre criptografado confirmado no servidor" app-31.js
+          grep -q "Sair da conta" app-32.js
+          grep -q "10. Fila" app-29.js
+          grep -q "repairQueueEncoding" app-25.js
+
+      - name: Conflict markers
+        shell: bash
+        run: |
+          if grep -R -nE '^(<<<<<<<|=======|>>>>>>>)' --include='*.js' --include='*.html' --include='*.css' --include='*.json' .; then
+            echo 'Marcadores de conflito encontrados'; exit 1;
+          fi
+
+      - name: Secret exposure guard
+        shell: bash
+        run: |
+          if grep -R -nE 'sb_secret_|service_role|ORCID_PUBLIC_CLIENT_SECRET[[:space:]]*=|OPENALEX_API_KEY[[:space:]]*=' --include='*.js' --include='*.html' --include='*.css' .; then
+            echo 'Possível segredo exposto no cliente'; exit 1;
+          fi
+          echo 'secret exposure guard ok'

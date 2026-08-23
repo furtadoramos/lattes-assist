@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz e /rc/ publicam a v1.7 estável. /beta/ publica a v1.8 beta pop4 final com Publish or Perish, Gerenciar excluídos no menu e remoção explícita da Fila.
+# A raiz e /rc/ publicam a v1.7 estável. /beta/ publica a v1.8 beta pop4 final limpa com Publish or Perish, Gerenciar excluídos no menu e remoção explícita da Fila.
 jobs:
   deploy:
     environment:

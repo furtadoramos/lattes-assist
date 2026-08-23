@@ -1,0 +1,136 @@
+name: v1.8 Release Checks
+
+on:
+  push:
+    branches: ["feature/publish-or-perish"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in app-*.js bootstrap.js install.js sw.js; do
+            node --check "$f"
+          done
+
+      - name: Manifest JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('manifest.webmanifest','utf8')); console.log('manifest ok')"
+
+      - name: Module completeness
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const b=fs.readFileSync('bootstrap.js','utf8');
+          const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
+          const uniq=[...new Set(mods)];
+          const expected=Array.from({length:40},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==40) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 40`);
+          for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
+          if(b.indexOf('app-40.js')<b.indexOf('app-39.js')) throw new Error('app-40.js precisa carregar após app-39.js');
+          const sw=fs.readFileSync('sw.js','utf8');
+          if(!/length:40/.test(sw)) throw new Error('service worker não cacheia 40 módulos');
+          if(!sw.includes('lattes-assist-v1.8-stable-1')) throw new Error('cache estável v1.8 ausente');
+          const idx=fs.readFileSync('index.html','utf8');
+          if(!idx.includes('bootstrap.js?v=1.8-1')) throw new Error('index não força bootstrap v1.8');
+          if(!idx.includes('<title>Lattes Assist v1.8</title>')) throw new Error('título estável v1.8 ausente');
+          console.log('module completeness ok');
+          NODE
+
+      - name: Publish or Perish parser contract
+        shell: bash
+        run: |
+          node <<'NODE'
+          const assert=require('assert');
+          require('./app-36.js');
+          const p=globalThis.LattesPopInterop;
+          assert(p,'LattesPopInterop não exportado');
+          const json='\uFEFF[{"type":"Journal Article","title":"Artigo Árvore","authors":["Ana Silva","João Souza"],"source":"Revista Teste","year":2024,"doi":"10.1234/teste","cites":17,"use":true}]';
+          const j=p.parsePopJson(json);assert.equal(j.length,1);const jn=p.normalizePopRecord(j[0],'json');assert.equal(jn.title,'Artigo Árvore');assert.equal(jn.cites,17);assert.equal(jn.doi,'10.1234/teste');
+          const jsonl='{"title":"Um","authors":["A"],"year":2020,"cites":2}\n{"title":"Dois","authors":["B"],"year":2021,"cites":4}\n';
+          assert.equal(p.parsePopJsonl(jsonl).length,2);
+          const ris='\uFEFFTY  - JOUR\nAU  - Silva, Ana\nTI  - Artigo Árvore\nDO  - 10.1234/teste\nPY  - 2024///\nM1  - 17 cites: https://example.org/cites\nER  - \n';
+          const r=p.parsePopRis(ris);assert.equal(r.length,1);const rn=p.normalizePopRecord(r[0],'ris');assert.equal(rn.cites,17);
+          const out=p.recordsToPopRis([{title:'Artigo Árvore',year:'2024',doi:'10.1234/teste',authors:['Ana Silva'],classification:{key:'ARTIGO'},popMetrics:{cites:17}}]);
+          for(const marker of ['TY  - JOUR','AU  - Ana Silva','TI  - Artigo Árvore','DO  - 10.1234/teste','PY  - 2024///','17 cites','ER  -']) assert(out.includes(marker),`RIS export sem ${marker}`);
+          console.log('Publish or Perish parser/export contract ok');
+          NODE
+
+      - name: External exclusion fingerprint contract
+        shell: bash
+        run: |
+          node <<'NODE'
+          const assert=require('assert');
+          require('./app-38.js');
+          const c=globalThis.LattesExternalCuration;
+          assert(c,'LattesExternalCuration não exportado');
+          const fps=c.externalCandidateFingerprints({doi:'https://doi.org/10.1234/ABC',title:'Banco de dados Zenodo',year:2025});
+          assert(fps.includes('doi:10.1234/abc'),'fingerprint DOI ausente');
+          assert(fps.some(x=>x.includes('banco de dados zenodo')&&x.includes('2025')),'fingerprint título+ano ausente');
+          assert(c.externalExclusionMatches({doi:'10.1234/abc'},[{fingerprints:['doi:10.1234/abc']}]),'exclusão por DOI falhou');
+          assert(!c.externalExclusionMatches({title:'Publicação legítima',year:2025},[{fingerprints:fps}]),'exclusão indevida');
+          console.log('external exclusion fingerprint contract ok');
+          NODE
+
+      - name: Integration and curation markers
+        shell: bash
+        run: |
+          grep -q "Importar resultados do PoP" app-36.js
+          grep -q "parsePopJsonl" app-36.js
+          grep -q "parsePopCsv" app-36.js
+          grep -q "parsePopRis" app-36.js
+          grep -q "Exportar somente registros PoP em RIS" app-37.js
+          grep -q "Exportar candidatos consolidados em RIS" app-37.js
+          grep -q "Excluir" app-38.js
+          grep -q "externalExclusions" app-38.js
+          grep -q "Gerenciar excluídos" app-39.js
+          grep -q "3.1 Gerenciar excluídos" app-39.js
+          grep -q "Remover da Fila" app-39.js
+          grep -q "Lattes Assist v1.8" app-40.js
+
+      - name: Existing critical feature markers
+        shell: bash
+        run: |
+          grep -q "Cofre recuperado com segurança" app-34.js
+          grep -q "Cofre criptografado confirmado no servidor" app-31.js
+          grep -q "Sair da conta" app-32.js
+          grep -q "10. Fila" app-29.js
+          grep -q "repairQueueEncoding" app-25.js
+          grep -q "removeQueueItem" app-25.js
+
+      - name: Stable v1.8 identity guard
+        shell: bash
+        run: |
+          grep -q "STABLE_VERSION_V18='1.8'" app-40.js
+          grep -q "curadoria curricular inteligente · v1.8" app-40.js
+          grep -q "Lattes Assist v1.8" app-40.js
+          if grep -q "textContent='v1.8 beta'" app-40.js || grep -q "document.title='Lattes Assist v1.8 beta'" app-40.js; then
+            echo 'app-40 não deve identificar a release final como beta'; exit 1;
+          fi
+
+      - name: Conflict markers
+        shell: bash
+        run: |
+          if grep -R -nE '^(<<<<<<<|=======|>>>>>>>)' --include='*.js' --include='*.html' --include='*.css' --include='*.json' .; then
+            echo 'Marcadores de conflito encontrados'; exit 1;
+          fi
+
+      - name: Secret exposure guard
+        shell: bash
+        run: |
+          if grep -R -nE 'sb_secret_|service_role|ORCID_PUBLIC_CLIENT_SECRET[[:space:]]*=|OPENALEX_API_KEY[[:space:]]*=' --include='*.js' --include='*.html' --include='*.css' .; then
+            echo 'Possível segredo exposto no cliente'; exit 1;
+          fi
+          echo 'secret exposure guard ok'

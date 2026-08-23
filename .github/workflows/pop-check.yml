@@ -36,15 +36,15 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:38},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==38) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 38`);
+          const expected=Array.from({length:39},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==39) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 39`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-38.js')<b.indexOf('app-37.js')) throw new Error('app-38.js precisa carregar após app-37.js');
+          if(b.indexOf('app-39.js')<b.indexOf('app-38.js')) throw new Error('app-39.js precisa carregar após app-38.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:38/.test(sw)) throw new Error('service worker não cacheia 38 módulos');
-          if(!sw.includes('v1.8-beta-pop3')) throw new Error('cache beta PoP 3 ausente');
+          if(!/length:39/.test(sw)) throw new Error('service worker não cacheia 39 módulos');
+          if(!sw.includes('v1.8-beta-pop4')) throw new Error('cache beta PoP 4 ausente');
           const idx=fs.readFileSync('index.html','utf8');
-          if(!idx.includes('bootstrap.js?v=pop3')) throw new Error('index não força bootstrap PoP 3');
+          if(!idx.includes('bootstrap.js?v=pop4')) throw new Error('index não força bootstrap PoP 4');
           console.log('module completeness ok');
           NODE
 
@@ -96,10 +96,13 @@ jobs:
           grep -q "Exportar somente registros PoP em RIS" app-37.js
           grep -q "Exportar candidatos consolidados em RIS" app-37.js
           grep -q "Excluir" app-38.js
-          grep -q "Gerenciar excluídos" app-38.js
           grep -q "externalExclusions" app-38.js
           grep -q "relatedQueueItemsForExternal" app-38.js
-          grep -q "não reaparecerá" app-38.js
+          grep -q "Gerenciar excluídos" app-39.js
+          grep -q "3.1 Gerenciar excluídos" app-39.js
+          grep -q "external-exclusions" app-39.js
+          grep -q "Remover da Fila" app-39.js
+          grep -q "queue-remove-explicit" app-39.js
 
       - name: Existing critical feature markers
         shell: bash
@@ -109,6 +112,7 @@ jobs:
           grep -q "Sair da conta" app-32.js
           grep -q "10. Fila" app-29.js
           grep -q "repairQueueEncoding" app-25.js
+          grep -q "removeQueueItem" app-25.js
 
       - name: Conflict markers
         shell: bash

@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz e /rc/ publicam a v1.7 estável. /beta/ publica a integração Publish or Perish em desenvolvimento.
+# A raiz e /rc/ publicam a v1.7 estável. /beta/ publica a integração Publish or Perish em desenvolvimento (beta pop2).
 jobs:
   deploy:
     environment:

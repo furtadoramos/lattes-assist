@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz e /rc/ publicam a v1.7 estável. /beta/ publica a v1.8 beta pop3 com Publish or Perish e curadoria de exclusões.
+# A raiz e /rc/ publicam a v1.7 estável. /beta/ publica a v1.8 beta pop4 com Publish or Perish, exclusões no menu e remoção explícita da Fila.
 jobs:
   deploy:
     environment:

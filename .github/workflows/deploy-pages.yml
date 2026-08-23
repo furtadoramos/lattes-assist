@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz publica a v1.7 estável. /beta/ e /rc/ espelham a branch congelada release/v1.7-rc7.
+# A raiz, /beta/ e /rc/ publicam a v1.8 estável após a promoção autorizada.
 jobs:
   deploy:
     environment:
@@ -22,17 +22,16 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout stable main
+      - name: Checkout stable v1.8
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Montar espelhos beta e rc da v1.7
+      - name: Montar espelhos beta e rc da v1.8 estável
         shell: bash
         run: |
-          git fetch origin release/v1.7-rc7 --depth=1
           mkdir -p beta rc
-          git archive --format=tar FETCH_HEAD | tar -x -C beta
+          git archive --format=tar HEAD | tar -x -C beta
           cp -a beta/. rc/
           rm -rf beta/.github rc/.github
 

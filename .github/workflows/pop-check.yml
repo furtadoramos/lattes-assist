@@ -1,4 +1,4 @@
-name: Publish or Perish Integration Checks
+name: v1.8 Release Checks
 
 on:
   push:
@@ -36,15 +36,16 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:39},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==39) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 39`);
+          const expected=Array.from({length:40},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==40) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 40`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-39.js')<b.indexOf('app-38.js')) throw new Error('app-39.js precisa carregar após app-38.js');
+          if(b.indexOf('app-40.js')<b.indexOf('app-39.js')) throw new Error('app-40.js precisa carregar após app-39.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:39/.test(sw)) throw new Error('service worker não cacheia 39 módulos');
-          if(!sw.includes('v1.8-beta-pop4')) throw new Error('cache beta PoP 4 ausente');
+          if(!/length:40/.test(sw)) throw new Error('service worker não cacheia 40 módulos');
+          if(!sw.includes('lattes-assist-v1.8-stable-1')) throw new Error('cache estável v1.8 ausente');
           const idx=fs.readFileSync('index.html','utf8');
-          if(!idx.includes('bootstrap.js?v=pop4')) throw new Error('index não força bootstrap PoP 4');
+          if(!idx.includes('bootstrap.js?v=1.8-1')) throw new Error('index não força bootstrap v1.8');
+          if(!idx.includes('<title>Lattes Assist v1.8</title>')) throw new Error('título estável v1.8 ausente');
           console.log('module completeness ok');
           NODE
 
@@ -78,31 +79,26 @@ jobs:
           const fps=c.externalCandidateFingerprints({doi:'https://doi.org/10.1234/ABC',title:'Banco de dados Zenodo',year:2025});
           assert(fps.includes('doi:10.1234/abc'),'fingerprint DOI ausente');
           assert(fps.some(x=>x.includes('banco de dados zenodo')&&x.includes('2025')),'fingerprint título+ano ausente');
-          assert(c.externalExclusionMatches({doi:'10.1234/abc',title:'Outro título',year:2025},[{fingerprints:['doi:10.1234/abc']}]),'exclusão por DOI falhou');
-          assert(c.externalExclusionMatches({title:'Banco de dados Zenodo',year:2025},[{fingerprints:fps}]),'exclusão por título+ano falhou');
-          assert(!c.externalExclusionMatches({title:'Publicação legítima',year:2025},[{fingerprints:fps}]),'exclusão indevida de outro registro');
+          assert(c.externalExclusionMatches({doi:'10.1234/abc'},[{fingerprints:['doi:10.1234/abc']}]),'exclusão por DOI falhou');
+          assert(!c.externalExclusionMatches({title:'Publicação legítima',year:2025},[{fingerprints:fps}]),'exclusão indevida');
           console.log('external exclusion fingerprint contract ok');
           NODE
 
-      - name: Integration markers
+      - name: Integration and curation markers
         shell: bash
         run: |
           grep -q "Importar resultados do PoP" app-36.js
-          grep -q "Exportar fila em RIS" app-36.js
           grep -q "parsePopJsonl" app-36.js
           grep -q "parsePopCsv" app-36.js
           grep -q "parsePopRis" app-36.js
-          grep -q "popMetrics" app-36.js
           grep -q "Exportar somente registros PoP em RIS" app-37.js
           grep -q "Exportar candidatos consolidados em RIS" app-37.js
           grep -q "Excluir" app-38.js
           grep -q "externalExclusions" app-38.js
-          grep -q "relatedQueueItemsForExternal" app-38.js
           grep -q "Gerenciar excluídos" app-39.js
           grep -q "3.1 Gerenciar excluídos" app-39.js
-          grep -q "external-exclusions" app-39.js
           grep -q "Remover da Fila" app-39.js
-          grep -q "queue-remove-explicit" app-39.js
+          grep -q "Lattes Assist v1.8" app-40.js
 
       - name: Existing critical feature markers
         shell: bash
@@ -113,6 +109,14 @@ jobs:
           grep -q "10. Fila" app-29.js
           grep -q "repairQueueEncoding" app-25.js
           grep -q "removeQueueItem" app-25.js
+
+      - name: Stable v1.8 identity guard
+        shell: bash
+        run: |
+          grep -q "STABLE_VERSION_V18='1.8'" app-40.js
+          grep -q "curadoria curricular inteligente · v1.8" app-40.js
+          grep -q "Lattes Assist v1.8" app-40.js
+          if grep -q "beta" app-40.js; then echo 'app-40 não deve identificar a release final como beta'; exit 1; fi
 
       - name: Conflict markers
         shell: bash

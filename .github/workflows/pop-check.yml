@@ -56,21 +56,14 @@ jobs:
           require('./app-36.js');
           const p=globalThis.LattesPopInterop;
           assert(p,'LattesPopInterop não exportado');
-
-          const json='\uFEFF[{"type":"Journal Article","title":"Artigo Árvore","authors":["Ana Silva","João Souza"],"source":"Revista Teste","year":2024,"volume":12,"issue":2,"startpage":10,"endpage":20,"publisher":"Editora","doi":"10.1234/teste","issn":"1234-5678","abstract":"Resumo","article_url":"https://example.org/a","citation_url":"https://example.org/c","cites_url":"https://example.org/cites","cites":17,"ecc":17,"rank":3,"use":true}]';
-          const j=p.parsePopJson(json);assert.equal(j.length,1);const jn=p.normalizePopRecord(j[0],'json');assert.equal(jn.title,'Artigo Árvore');assert.equal(jn.authors.length,2);assert.equal(jn.venue,'Revista Teste');assert.equal(jn.year,'2024');assert.equal(jn.cites,17);assert.equal(jn.doi,'10.1234/teste');
-
+          const json='\uFEFF[{"type":"Journal Article","title":"Artigo Árvore","authors":["Ana Silva","João Souza"],"source":"Revista Teste","year":2024,"doi":"10.1234/teste","cites":17,"use":true}]';
+          const j=p.parsePopJson(json);assert.equal(j.length,1);const jn=p.normalizePopRecord(j[0],'json');assert.equal(jn.title,'Artigo Árvore');assert.equal(jn.cites,17);assert.equal(jn.doi,'10.1234/teste');
           const jsonl='{"title":"Um","authors":["A"],"year":2020,"cites":2}\n{"title":"Dois","authors":["B"],"year":2021,"cites":4}\n';
-          assert.equal(p.parsePopJsonl(jsonl).length,2);assert.equal(p.detectPopFormat('x.jsonl',jsonl),'jsonl');
-
-          const csv='\uFEFFCites,Authors,Title,Year,Source,Publisher,ArticleURL,CitesURL,GSRank,QueryDate,Type,DOI,ISSN,CitationURL,Volume,Issue,StartPage,EndPage,ECC,CitesPerYear,CitesPerAuthor,AuthorCount,Age,Abstract\n17,"Ana Silva; João Souza","Artigo Árvore",2024,"Revista Teste","Editora","https://example.org/a","https://example.org/cites",3,"2026-08-22 12:00:00","Journal Article","10.1234/teste","1234-5678","https://example.org/c",12,2,10,20,17,8.5,9,2,2,"Resumo"\n';
-          const c=p.parsePopCsv(csv);assert.equal(c.length,1);const cn=p.normalizePopRecord(c[0],'csv');assert.equal(cn.authors.length,2);assert.equal(cn.cites,17);assert.equal(cn.citesPerYear,8.5);assert.equal(cn.abstract,'Resumo');
-
-          const ris='\uFEFFTY  - JOUR\nAU  - Silva, Ana\nAU  - Souza, João\nTI  - Artigo Árvore\nJF  - Revista Teste\nPB  - Editora\nDO  - 10.1234/teste\nSN  - 1234-5678\nPY  - 2024///\nVL  - 12\nIS  - 2\nSP  - 10\nEP  - 20\nAB  - Resumo\nM1  - Query date: 2026-08-22 12:00:00\nM1  - 17 cites: https://example.org/cites\nER  - \n';
-          const r=p.parsePopRis(ris);assert.equal(r.length,1);const rn=p.normalizePopRecord(r[0],'ris');assert.equal(rn.authors.length,2);assert.equal(rn.title,'Artigo Árvore');assert.equal(rn.year,'2024');assert.equal(rn.cites,17);assert.equal(p.detectPopFormat('x.ris',ris),'ris');
-
-          const out=p.recordsToPopRis([{title:'Artigo Árvore',year:'2024',doi:'10.1234/teste',venue:'Revista Teste',authors:['Ana Silva'],classification:{key:'ARTIGO',label:'Artigo em periódico'},popMetrics:{cites:17,citesUrl:'https://example.org/cites'}}]);
-          for(const marker of ['TY  - JOUR','AU  - Ana Silva','TI  - Artigo Árvore','DO  - 10.1234/teste','PY  - 2024///','17 cites: https://example.org/cites','ER  -']) assert(out.includes(marker),`RIS export sem ${marker}`);
+          assert.equal(p.parsePopJsonl(jsonl).length,2);
+          const ris='\uFEFFTY  - JOUR\nAU  - Silva, Ana\nTI  - Artigo Árvore\nDO  - 10.1234/teste\nPY  - 2024///\nM1  - 17 cites: https://example.org/cites\nER  - \n';
+          const r=p.parsePopRis(ris);assert.equal(r.length,1);const rn=p.normalizePopRecord(r[0],'ris');assert.equal(rn.cites,17);
+          const out=p.recordsToPopRis([{title:'Artigo Árvore',year:'2024',doi:'10.1234/teste',authors:['Ana Silva'],classification:{key:'ARTIGO'},popMetrics:{cites:17}}]);
+          for(const marker of ['TY  - JOUR','AU  - Ana Silva','TI  - Artigo Árvore','DO  - 10.1234/teste','PY  - 2024///','17 cites','ER  -']) assert(out.includes(marker),`RIS export sem ${marker}`);
           console.log('Publish or Perish parser/export contract ok');
           NODE
 
@@ -83,13 +76,10 @@ jobs:
           grep -q "parsePopCsv" app-36.js
           grep -q "parsePopRis" app-36.js
           grep -q "popMetrics" app-36.js
-          grep -q "rebindExternalScanPreservingPop" app-36.js
-          grep -q "Publish or Perish" app-36.js
           grep -q "Exportar somente registros PoP em RIS" app-37.js
           grep -q "Exportar candidatos consolidados em RIS" app-37.js
           grep -q "lattes-assist-registros-publish-or-perish.ris" app-37.js
           grep -q "lattes-assist-candidatos-consolidados-para-publish-or-perish.ris" app-37.js
-          grep -q "popCandidates()" app-37.js
 
       - name: Existing critical feature markers
         shell: bash

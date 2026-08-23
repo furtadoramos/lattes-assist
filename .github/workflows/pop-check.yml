@@ -36,15 +36,15 @@ jobs:
           const b=fs.readFileSync('bootstrap.js','utf8');
           const mods=[...b.matchAll(/app-(\d{2})\.js/g)].map(m=>m[1]);
           const uniq=[...new Set(mods)];
-          const expected=Array.from({length:36},(_,i)=>String(i+1).padStart(2,'0'));
-          if(uniq.length!==36) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 36`);
+          const expected=Array.from({length:37},(_,i)=>String(i+1).padStart(2,'0'));
+          if(uniq.length!==37) throw new Error(`bootstrap contém ${uniq.length} módulos únicos; esperado 37`);
           for(const n of expected) if(!uniq.includes(n)) throw new Error(`app-${n}.js ausente do bootstrap`);
-          if(b.indexOf('app-36.js')<b.indexOf('app-35.js')) throw new Error('app-36.js precisa carregar após app-35.js');
+          if(b.indexOf('app-37.js')<b.indexOf('app-36.js')) throw new Error('app-37.js precisa carregar após app-36.js');
           const sw=fs.readFileSync('sw.js','utf8');
-          if(!/length:36/.test(sw)) throw new Error('service worker não cacheia 36 módulos');
-          if(!sw.includes('v1.8-beta-pop1')) throw new Error('cache beta PoP ausente');
+          if(!/length:37/.test(sw)) throw new Error('service worker não cacheia 37 módulos');
+          if(!sw.includes('v1.8-beta-pop2')) throw new Error('cache beta PoP 2 ausente');
           const idx=fs.readFileSync('index.html','utf8');
-          if(!idx.includes('bootstrap.js?v=pop1')) throw new Error('index não força bootstrap PoP');
+          if(!idx.includes('bootstrap.js?v=pop2')) throw new Error('index não força bootstrap PoP 2');
           console.log('module completeness ok');
           NODE
 
@@ -78,7 +78,6 @@ jobs:
         shell: bash
         run: |
           grep -q "Importar resultados do PoP" app-36.js
-          grep -q "Exportar candidatos em RIS" app-36.js
           grep -q "Exportar fila em RIS" app-36.js
           grep -q "parsePopJsonl" app-36.js
           grep -q "parsePopCsv" app-36.js
@@ -86,6 +85,11 @@ jobs:
           grep -q "popMetrics" app-36.js
           grep -q "rebindExternalScanPreservingPop" app-36.js
           grep -q "Publish or Perish" app-36.js
+          grep -q "Exportar somente registros PoP em RIS" app-37.js
+          grep -q "Exportar candidatos consolidados em RIS" app-37.js
+          grep -q "lattes-assist-registros-publish-or-perish.ris" app-37.js
+          grep -q "lattes-assist-candidatos-consolidados-para-publish-or-perish.ris" app-37.js
+          grep -q "popCandidates()" app-37.js
 
       - name: Existing critical feature markers
         shell: bash

@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz, /beta/ e /rc/ publicam a v1.8 estável após a promoção autorizada.
+# A raiz e /rc/ publicam a v1.8 estável. /beta/ publica a v1.8.1 em validação com recuperação de senha.
 jobs:
   deploy:
     environment:
@@ -27,12 +27,13 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Montar espelhos beta e rc da v1.8 estável
+      - name: Montar RC estável e beta de recuperação de senha
         shell: bash
         run: |
           mkdir -p beta rc
-          git archive --format=tar HEAD | tar -x -C beta
-          cp -a beta/. rc/
+          git archive --format=tar HEAD | tar -x -C rc
+          git fetch origin feature/password-recovery --depth=1
+          git archive --format=tar FETCH_HEAD | tar -x -C beta
           rm -rf beta/.github rc/.github
 
       - name: Configure and enable Pages

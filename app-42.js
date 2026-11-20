@@ -1,5 +1,5 @@
 const PASSWORD_RECOVERY_BETA2='1.8.1-beta2';
-const PASSWORD_RECOVERY_REDIRECT_BETA2='https://furtadoramos.github.io/lattes-assist/beta/?password-reset=1';
+const PASSWORD_RECOVERY_REDIRECT_BETA2='https://furtadoramos.github.io/lattes-assist/beta/';
 
 function recoveryRequestStatus(message,kind=''){
   const el=document.getElementById('recoveryRequestStatus');

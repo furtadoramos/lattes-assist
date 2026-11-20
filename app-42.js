@@ -66,7 +66,11 @@ function directRecoveryRequestRequested(){
   try{const u=new URL(location.href);return['1','true','yes'].includes(String(u.searchParams.get('recover')||u.searchParams.get('recovery')||'').toLowerCase())}catch{return false}
 }
 function directPasswordResetRequested(){
-  try{const u=new URL(location.href);return['1','true','yes'].includes(String(u.searchParams.get('password-reset')||'').toLowerCase())}catch{return false}
+  try{
+    const u=new URL(location.href);
+    const hash=new URLSearchParams(String(u.hash||'').replace(/^#/,''));
+    return ['1','true','yes'].includes(String(u.searchParams.get('password-reset')||'').toLowerCase())||hash.get('type')==='recovery'||u.searchParams.get('type')==='recovery';
+  }catch{return false}
 }
 async function openPasswordResetIfReady(){
   if(!directPasswordResetRequested())return;

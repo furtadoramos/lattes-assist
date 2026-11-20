@@ -14,7 +14,7 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 
-# A raiz e /rc/ publicam a v1.8 estável. /beta/ publica a v1.8.1 em validação com recuperação de senha.
+# A raiz e /rc/ publicam a v1.8 estável. /beta/ publica a v1.8.1 beta2 em validação com recuperação de senha por link direto.
 jobs:
   deploy:
     environment:
